@@ -1,6 +1,9 @@
-package com.example.newsapp.Classes;
+package com.example.newsapp.ui;
 
-import com.example.newsapp.Interfaces.NewsView;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+
+import com.example.newsapp.Classes.RetrofitClient;
 import com.example.newsapp.Model.Articles;
 import com.example.newsapp.Model.HeadLines;
 
@@ -11,15 +14,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class NewsPresenter {
+public class NewsViewModel extends ViewModel {
 
-    private NewsView view;
     private List<Articles> articles = new ArrayList<>();
-
-    public NewsPresenter(NewsView view) {
-        this.view = view;
-    }
-
+    public MutableLiveData<List<Articles>> newsMutableLiveData = new MutableLiveData<>();
+    
     public void getNewsArticles(String country,String api_Key){
 
         Call<HeadLines> call = RetrofitClient.getInstance().getApi().getHeadLines(country,api_Key);
@@ -27,9 +26,8 @@ public class NewsPresenter {
             @Override
             public void onResponse(Call<HeadLines> call, Response<HeadLines> response) {
                 if(response.isSuccessful() && response.body().getArticles() != null) {
-                    articles.clear();
-                    articles = response.body().getArticles();
-                    view.onGetArticles(articles);
+                    articles.addAll(response.body().getArticles());
+                    newsMutableLiveData.setValue(articles);
                 }
             }
 
@@ -48,8 +46,8 @@ public class NewsPresenter {
             public void onResponse(Call<HeadLines> call, Response<HeadLines> response) {
                 if(response.isSuccessful() && response.body().getArticles() != null) {
                     articles.clear();
-                    articles = response.body().getArticles();
-                    view.onSearchArticles(articles);
+                    articles.addAll(response.body().getArticles());
+                    newsMutableLiveData.setValue(articles);
                 }
             }
 
@@ -59,5 +57,4 @@ public class NewsPresenter {
             }
         });
     }
-
 }

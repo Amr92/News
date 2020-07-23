@@ -8,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
 
     public static final String BASE_URL ="https://newsapi.org/v2/";
-    private static RetrofitClient apiClient;
+    private static RetrofitClient mInstance;
     private Retrofit retrofit;
 
     private RetrofitClient(){
@@ -19,10 +19,10 @@ public class RetrofitClient {
     }
 
     public static synchronized RetrofitClient getInstance(){
-        if(apiClient == null){
-            apiClient = new RetrofitClient();
+        if(mInstance == null){
+            mInstance = new RetrofitClient();
         }
-        return apiClient;
+        return mInstance;
     }
 
     public ApiInterface getApi(){

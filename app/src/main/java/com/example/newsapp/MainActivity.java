@@ -14,29 +14,22 @@ import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.newsapp.Adapters.RecyclerAdapter;
-import com.example.newsapp.Classes.NewsPresenter;
-import com.example.newsapp.Interfaces.NewsView;
 import com.example.newsapp.Model.Articles;
-import com.example.newsapp.Model.HeadLines;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.TextHttpResponseHandler;
+import com.example.newsapp.ui.NewsViewModel;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import cz.msebera.android.httpclient.Header;
 
-public class MainActivity extends AppCompatActivity implements NewsView {
+public class MainActivity extends AppCompatActivity{
 
     @BindView(R.id.et_query)
     EditText editText;
@@ -47,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements NewsView {
     private RecyclerAdapter adapter;
     private final String API_KEY ="9e81e77519624e0b94f79848d4044360";
     private ProgressBar bar;
-    private NewsPresenter presenter;
+    private NewsViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +48,23 @@ public class MainActivity extends AppCompatActivity implements NewsView {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        viewModel = ViewModelProviders.of(this).get(NewsViewModel.class);
+
         bar = findViewById(R.id.progress_circular);
         recyclerView.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
 
-        presenter = new NewsPresenter(this);
-
         final String country = getCountry();
-        presenter.getNewsArticles(country,API_KEY);
+
+        viewModel.getNewsArticles(country,API_KEY);
+
+        viewModel.newsMutableLiveData.observe(this, new Observer<List<Articles>>() {
+            @Override
+            public void onChanged(List<Articles> articlesList) {
+                bar.setVisibility(View.INVISIBLE);
+                adapter = new RecyclerAdapter(articlesList,MainActivity.this);
+                recyclerView.setAdapter(adapter);
+            }
+        });
 
         button = findViewById(R.id.btnSearch);
 
@@ -71,10 +74,10 @@ public class MainActivity extends AppCompatActivity implements NewsView {
 
                 if(!editText.getText().toString().equals("")){
                     String search = editText.getText().toString();
-                    presenter.searchNewsArticles(search,API_KEY);
+                    viewModel.searchNewsArticles(search,API_KEY);
                 }
                 else{
-                    presenter.getNewsArticles(country,API_KEY);
+                    viewModel.getNewsArticles(country,API_KEY);
                 }
             }
         });
@@ -84,25 +87,6 @@ public class MainActivity extends AppCompatActivity implements NewsView {
         }else{
             showCustomDialog();
         }
-    }
-
-    @Override
-    public void onGetArticles(List<Articles> articlesList) {
-
-        bar.setVisibility(View.INVISIBLE);
-        adapter = new RecyclerAdapter(articlesList,MainActivity.this);
-        recyclerView.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onSearchArticles(List<Articles> arcList) {
-
-        bar.setVisibility(View.INVISIBLE);
-        adapter = new RecyclerAdapter(arcList,MainActivity.this);
-        recyclerView.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-
     }
 
     public String getCountry(){
